@@ -17,6 +17,9 @@ import org.codehaus.jettison.json.JSONObject;
 
 import com.testing.services.beans.RegisterResponse;
 import com.testing.services.beans.RequestRegisterUser;
+import com.testing.services.request.RegisterRequest;
+import com.testing.services.response.GenericDataResponse;
+import com.testing.services.response.GenericResponse;
 
 @Path("/")
 public class Services {
@@ -44,30 +47,49 @@ public class Services {
 	@Path("/users")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response registerUser(String request) {
+	public Response registerUser(RegisterRequest request) {
 		Response response = null;
-		RegisterResponse responseEntity = new RegisterResponse();
+		GenericResponse genericResponse = new GenericResponse();
+		GenericDataResponse dataResponse = new GenericDataResponse();
 		
-		try {
-			JSONObject jsonRequest = new JSONObject(request);
+		if(request.nombre==null || request.apellido==null || request.email==null || request.password==null) {
 			
-			if(jsonRequest.isNull("name")) {
-				responseEntity.setErrorDescription("name field cannot be null!");
-				responseEntity.setResult("ERROR");
-				responseEntity.setStatusCode("500");
-				Response.status(500).type(MediaType.APPLICATION_JSON).entity(responseEntity).build();
+			genericResponse.setDescription("Missing fields, expected are: nombre, apellido, email, password");
+			genericResponse.setErrorCode("ERROR");
+			
+			return Response.status(500).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+		}else{
+			
+			if(request.nombre.length()>30) {
+				genericResponse.setDescription("'nombre' field length exceeded, max length is 30");
+				genericResponse.setErrorCode("ERROR");
+				return Response.status(500).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+			}else if(request.apellido.length()>50) {
+				genericResponse.setDescription("'apellido' field length exceeded, max length is 50");
+				genericResponse.setErrorCode("ERROR");
+				return Response.status(500).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+			}else if(!checkEmail(request.email)) {
+				genericResponse.setDescription("not a valid email");
+				genericResponse.setErrorCode("ERROR");
+				return Response.status(500).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 			}
 			
-			
-		} catch (JSONException e) {
-			responseEntity = new RegisterResponse();
-			responseEntity.setErrorDescription("Not a valid JSON");
-			responseEntity.setResult("ERROR");
-			responseEntity.setStatusCode("500");
-			return  Response.status(500).type(MediaType.APPLICATION_JSON).entity(responseEntity).build();
 		}
 		
-		return response;
+		
+		
+		
+		return Response.status(200).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+	}
+	
+	
+	private boolean checkEmail(String email) {
+		boolean isValidMail=true;
+		
+		
+		
+		return isValidMail;
+		
 	}
 	
 	
