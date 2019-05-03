@@ -4,6 +4,7 @@ import javax.xml.bind.annotation.XmlElement;
 
 public class GenericResponse {
 	
+	
 	private String errorCode;
 	private String description;
 	private GenericDataResponse data;
@@ -33,6 +34,10 @@ public class GenericResponse {
 	public void setData(GenericDataResponse data) {
 		this.data = data;
 	}
+
+	
+	
+	
 	
 	
 	
