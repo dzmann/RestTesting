@@ -35,26 +35,7 @@ public class Services {
 	private String errorDescription;
 	private int code =-1;
 	private static final Pattern VALIDATE_EMAIL_REGEX = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
-	/*
-	 * @GET
-	 * 
-	 * @Path("/test/{user}") public Response probarGet(@PathParam("user") String
-	 * user,@HeaderParam("authorization") String token) {
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * return Response.ok("Invocación correcta usando Tomcat " + user + " - " +
-	 * token, MediaType.APPLICATION_JSON).build();
-	 * 
-	 * }
-	 * 
-	 * @GET public Response authenticate(@HeaderParam("authorization") String token)
-	 * {
-	 * 
-	 * return Response.ok("token=" + token).build(); }
-	 */
+
 	
 	@GET
 	@Path("/users/{user}")
