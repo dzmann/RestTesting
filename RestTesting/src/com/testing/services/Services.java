@@ -21,13 +21,17 @@ import com.testing.services.beans.RegisterResponse;
 import com.testing.services.beans.RequestRegisterUser;
 import com.testing.services.database.DBOperations;
 import com.testing.services.model.User;
+import com.testing.services.request.LoginRequest;
 import com.testing.services.request.RegisterRequest;
 import com.testing.services.response.GenericDataResponse;
 import com.testing.services.response.GenericResponse;
+import com.testing.services.response.LoginResponse;
+import com.testing.services.response.Token;
 
 @Path("/")
 public class Services {
 	
+	private static final String BEARER = "Bearer";
 	private String errorDescription;
 	private int code =-1;
 	private static final Pattern VALIDATE_EMAIL_REGEX = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
@@ -51,6 +55,31 @@ public class Services {
 	 * 
 	 * return Response.ok("token=" + token).build(); }
 	 */
+	
+	@GET
+	@Path("/users/{user}")
+	public Response testToken(@HeaderParam("authorization") String bearer, @PathParam("user") String user){
+		GenericResponse genericResponse = new GenericResponse();
+		Response response = null;
+		User u = new User();
+		u.setEmail(user);
+		
+		if(DBOperations.checkUser(u)) {
+			
+			
+			
+			
+		}else {
+			
+			genericResponse.setDescription("User does not exist");
+			response = Response.status(401).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+		}
+		
+		String token = bearer.substring(BEARER.length()).trim();
+	  
+	  return response;
+	  
+	 }
 
 	@POST
 	@Path("/users")
@@ -72,9 +101,27 @@ public class Services {
 			u.setEmail(request.email);
 			u.setPassword(request.password);
 			
-			DBOperations.insert(u);
 			
-			response =  Response.status(200).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+			if(!DBOperations.checkUser(u)) {
+				try {
+
+					DBOperations.insert(u);
+					genericResponse.setDescription("user registered");
+					response =  Response.status(200).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+					
+				} catch (Exception e) {
+					genericResponse.setDescription("An error ocurred inserting new user");
+					response = Response.status(500).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+				}
+				
+			}else {
+				
+				genericResponse.setDescription("the user already exists");
+				response = Response.status(500).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+			}
+			
+			
+			
 			
 		}else if(this.code==1) {
 			genericResponse.setErrorCode("MALFORMED REQUEST");
@@ -85,6 +132,32 @@ public class Services {
 		this.code=-1;
 		this.errorDescription="";
 
+		return response;
+	}
+	
+	@POST
+	@Path("/login")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response login(LoginRequest request) {
+		Response response = null;
+		Token tokenResponse = new Token();
+		GenericResponse genericResponse = new GenericResponse();
+		LoginResponse loginResponse = new LoginResponse();
+		
+		User u = new User();
+		u.setEmail(request.user);
+		u.setPassword(request.password);
+		
+		if(DBOperations.login(u)) {
+			tokenResponse = DBOperations.saveToken(u);
+			genericResponse.setDescription("User logged");
+			response = Response.status(200).type(MediaType.APPLICATION_JSON).entity(tokenResponse).build();
+		}else {
+			genericResponse.setDescription("Wrong user or password");
+			response = Response.status(401).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+		}
+		
 		return response;
 	}
 	
