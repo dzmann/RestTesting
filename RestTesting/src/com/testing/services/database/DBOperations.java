@@ -62,6 +62,61 @@ public class DBOperations {
 		return result;
 	}
 	
+	public static boolean update(User user,  User newData) {
+		
+		boolean result = false;
+		Connection con = null;
+		Statement stmt = null;
+		Calendar calendar = Calendar.getInstance();
+		try {
+			con = DBConnection.getConnection();
+			
+			
+			/*String deleteQuery = "UPDATE OAUTH_DATA set (user_id='"+ user.getEmail() +"', access_token='"+ user.get+"'";
+			stmt = con.createStatement();
+			stmt.execute(deleteQuery);*/
+			
+			String deleteQuery = "DELETE FROM OAUTH_DATA WHERE user_id='"+ user.getEmail() +"'";
+			stmt = con.createStatement();
+			stmt.execute(deleteQuery);
+			
+			String tokenInserQuery = "INSERT INTO OAUTH_DATA (user_id, access_token, expiry_date) VALUES('"+ newData.getEmail() +"', 'first registry', '"+String.valueOf(calendar.getTimeInMillis())+"')";
+			stmt = con.createStatement();
+			stmt.execute(tokenInserQuery);
+			
+			
+			String query = "UPDATE USERS SET nombre=?, apellido=?, mail=?, password=? WHERE mail='"+ user.getEmail()+"'";
+			
+			PreparedStatement preparedStmt = con.prepareStatement(query);
+			
+			preparedStmt.setString(1, newData.getNombre());
+			preparedStmt.setString(2, newData.getApellido());
+			preparedStmt.setString(3, newData.getEmail());
+			preparedStmt.setString(4, newData.getPassword());
+			
+			preparedStmt.executeUpdate();
+			
+			con.close();
+			
+			result = true;
+		} catch (SQLException e) {
+			result = false;
+			e.printStackTrace();
+		}finally {
+			if(con!=null) {
+				try {
+					con.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return result;
+	}
+	
+	
 	public static boolean login (User user) {
 		boolean result = false;
 		

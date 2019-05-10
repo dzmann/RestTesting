@@ -8,6 +8,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -163,6 +164,67 @@ public class Services {
 		return response;
 	}
 	
+	
+	@PUT
+	@Path("/users/{user}")
+	public Response updateAccount(@HeaderParam("authorization") String bearer, @PathParam("user") String user, RegisterRequest request){
+		
+		GenericResponse genericResponse = new GenericResponse();
+		Response response = null;
+		User u = new User();
+		u.setEmail(user);
+		String token = bearer.substring(BEARER.length()).trim();
+		validateRequest(request);
+		
+		if(DBOperations.checkUser(u)) {
+			
+			boolean validToken = TokenService.isValidToken(user, token);
+			
+			
+			if(!validToken) {
+				genericResponse.setDescription("Device credentials expired");
+				response = Response.status(401).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+			}else {
+				
+				u=DBOperations.getUser(user);
+				if(this.code==0) {
+					
+					User newData = new User();
+					newData.setApellido(request.apellido);
+					newData.setEmail(request.email);
+					newData.setNombre(request.nombre);
+					newData.setPassword(request.password);
+					
+					boolean update = DBOperations.update(u, newData);
+					
+					if(update) {
+						genericResponse.setDescription("Account information updated");
+						genericResponse.setErrorCode("OK");
+						response = Response.status(200).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+					}else {
+						genericResponse.setDescription("An error ocurred updating the account");
+						genericResponse.setErrorCode("Unknown error");
+						response = Response.status(500).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+					}
+					
+				}else if(this.code==1) {
+					genericResponse.setErrorCode("MALFORMED REQUEST");
+					genericResponse.setDescription(this.errorDescription);
+					response =  Response.status(400).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+				}
+				
+				
+			}
+			
+		}else {
+			
+			genericResponse.setDescription("User does not exist");
+			response = Response.status(401).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+		}
+		
+		
+		return response;
+	}
 
 
 	private void validateRequest(RegisterRequest request) {
