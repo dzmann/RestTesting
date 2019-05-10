@@ -2,14 +2,17 @@ package com.testing.services.authBeans;
 
 import java.nio.charset.Charset;
 import java.security.SecureRandom;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
 import com.testing.services.beans.Token;
+import com.testing.services.database.DBOperations;
 
 public class TokenService {
 	
@@ -52,10 +55,27 @@ public class TokenService {
 		usersAuth.put("098045377", "4321");
 	}
 	
-	public static boolean isValidToken() {
+	public static boolean isValidToken(String userId, String token) {
+		boolean result = true;
+		com.testing.services.response.Token dbToken = DBOperations.getToken(userId);
 		
+		Calendar dbTokenDate = Calendar.getInstance();
+		Calendar nowDate = Calendar.getInstance();
+		dbTokenDate.setTimeInMillis(Long.parseLong(dbToken.getExpiry_date()));
 		
-		return false;
+		if(token.equals(dbToken.getAccess_token())) {
+			
+			int resultDate = nowDate.compareTo(dbTokenDate);
+
+			if(resultDate > 0) {
+				result=false;
+			}
+			
+		}else {
+			result=false;
+		}
+		
+		return result;
 		
 		
 	}

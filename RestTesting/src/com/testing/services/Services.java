@@ -17,6 +17,7 @@ import javax.ws.rs.core.Response;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
+import com.testing.services.authBeans.TokenService;
 import com.testing.services.beans.RegisterResponse;
 import com.testing.services.beans.RequestRegisterUser;
 import com.testing.services.database.DBOperations;
@@ -44,11 +45,31 @@ public class Services {
 		Response response = null;
 		User u = new User();
 		u.setEmail(user);
+		String token = bearer.substring(BEARER.length()).trim();
+		
+		
 		
 		if(DBOperations.checkUser(u)) {
 			
+			boolean validToken = TokenService.isValidToken(user, token);
 			
-			
+			if(!validToken) {
+				genericResponse.setDescription("Device credentials expired");
+				response = Response.status(401).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+			}else {
+				
+				u=DBOperations.getUser(user);
+				GenericDataResponse genericDataResponse = new GenericDataResponse();
+				genericDataResponse.setNombre(u.getNombre());
+				genericDataResponse.setApellido(u.getApellido());
+				genericDataResponse.setEmail(u.getEmail());
+				genericResponse.setDescription("Account information obtained");
+				genericResponse.setErrorCode("OK");
+				genericResponse.setData(genericDataResponse);
+				
+				response = Response.status(200).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
+				
+			}
 			
 		}else {
 			
@@ -56,7 +77,7 @@ public class Services {
 			response = Response.status(401).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 		}
 		
-		String token = bearer.substring(BEARER.length()).trim();
+		
 	  
 	  return response;
 	  
@@ -142,7 +163,7 @@ public class Services {
 		return response;
 	}
 	
-	
+
 
 	private void validateRequest(RegisterRequest request) {
 		

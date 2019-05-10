@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 import com.testing.services.model.User;
 import com.testing.services.response.Token;
@@ -111,7 +112,7 @@ public class DBOperations {
 		
 		token.setAccess_token(TokenGenerator.generate());
 		token.setUser_id(u.getEmail());
-		token.setExpiry_date(String.valueOf(calendar.getTimeInMillis()));
+		token.setExpiry_date(String.valueOf(TimeUnit.MILLISECONDS.toMillis(calendar.getTimeInMillis())));
 		
 		System.out.println(calendar.getTime().toString());
 		
@@ -205,17 +206,60 @@ public class DBOperations {
 			
 			ResultSet rs = preparedStmt.executeQuery(query);
 			
-			result.setAccess_token(rs.getString("access_token"));
-			result.setExpiry_date(rs.getString("expiry_date"));
-			result.setUser_id(email);
-			
-			
+			while(rs.next()) {
+				result.setAccess_token(rs.getString("access_token"));
+				result.setExpiry_date(rs.getString("expiry_date"));
+				result.setUser_id(email);
+				
+			}
 			
 			con.close();
 			
 			
 		} catch (SQLException e) {
 			result=null;
+			e.printStackTrace();
+		}finally {
+			if(con!=null) {
+				try {
+					con.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		
+		return result;
+	}
+	
+	
+	public static User getUser(String email) {
+		User result = null;
+		
+		Connection con = null;
+
+		try {
+			con = DBConnection.getConnection();
+			String query = "SELECT * FROM USERS WHERE mail='"+ email +"'";
+			
+			Statement preparedStmt = con.createStatement();
+			
+			ResultSet rs = preparedStmt.executeQuery(query);
+			
+			if(rs.next()) {
+				result = new User();
+				result.setNombre(rs.getString("nombre"));
+				result.setApellido(rs.getString("apellido"));
+				result.setEmail(rs.getString("mail"));
+			}
+			
+			con.close();
+			
+			
+		} catch (SQLException e) {
+			result = null;
 			e.printStackTrace();
 		}finally {
 			if(con!=null) {
