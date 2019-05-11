@@ -11,7 +11,9 @@ public class DBConnection {
 		
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			con = DriverManager.getConnection("jdbc:mysql://localhost/testing_rest?user=root&password=&serverTimezone=UTC");
+			
+			con = DriverManager.getConnection("jdbc:mysql://bf81a40bd1720b:dcda3f67@us-cdbr-iron-east-02.cleardb.net/heroku_69648511e6314bb?user=bf81a40bd1720b&password=dcda3f67&serverTimezone=UTC");
+			//con = DriverManager.getConnection("jdbc:mysql://localhost/testing_rest?user=root&password=&serverTimezone=UTC");
 		} catch (SQLException ex) {
 			 System.out.println("SQLException: " + ex.getMessage());
 			 System.out.println("SQLState: " + ex.getSQLState());

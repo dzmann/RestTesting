@@ -40,43 +40,35 @@ public class Services {
 
 	
 	@GET
-	@Path("/users/{user}")
-	public Response testToken(@HeaderParam("authorization") String bearer, @PathParam("user") String user){
+	@Path("/users")
+	public Response testToken(@HeaderParam("authorization") String bearer){
 		GenericResponse genericResponse = new GenericResponse();
 		Response response = null;
 		User u = new User();
-		u.setEmail(user);
 		String token = bearer.substring(BEARER.length()).trim();
 		
-		
-		
-		if(DBOperations.checkUser(u)) {
 			
-			boolean validToken = TokenService.isValidToken(user, token);
+		boolean validToken = TokenService.isValidToken("", token);
 			
 			if(!validToken) {
-				genericResponse.setDescription("Device credentials expired");
+				genericResponse.setDescription("Invalid token");
 				response = Response.status(401).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 			}else {
-				
-				u=DBOperations.getUser(user);
+				String userId = DBOperations.getUserIdFromToken(token);
+				System.out.println("USerId: " + userId);
+				u=DBOperations.getUser(userId);
 				GenericDataResponse genericDataResponse = new GenericDataResponse();
 				genericDataResponse.setNombre(u.getNombre());
 				genericDataResponse.setApellido(u.getApellido());
 				genericDataResponse.setEmail(u.getEmail());
-				genericResponse.setDescription("Account information obtained");
+				genericResponse.setDescription("User found");
 				genericResponse.setErrorCode("OK");
 				genericResponse.setData(genericDataResponse);
 				
 				response = Response.status(200).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 				
 			}
-			
-		}else {
-			
-			genericResponse.setDescription("User does not exist");
-			response = Response.status(401).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
-		}
+		
 		
 		
 	  
@@ -109,17 +101,23 @@ public class Services {
 				try {
 
 					DBOperations.insert(u);
-					genericResponse.setDescription("user registered");
+					genericResponse.setErrorCode("OK");
+					genericResponse.setDescription("User registered successfully");
+					dataResponse.setNombre(u.getNombre());
+					dataResponse.setApellido(u.getApellido());
+					dataResponse.setEmail(u.getEmail());
+					genericResponse.setData(dataResponse);
 					response =  Response.status(200).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 					
 				} catch (Exception e) {
+					genericResponse.setErrorCode("UNKNOWN_ERROR");
 					genericResponse.setDescription("An error ocurred inserting new user");
 					response = Response.status(500).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 				}
 				
 			}else {
-				
-				genericResponse.setDescription("the user already exists");
+				genericResponse.setErrorCode("DUPLICATED_USER");
+				genericResponse.setDescription("The user " + u.getEmail() + " already exists");
 				response = Response.status(500).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 			}
 			
@@ -127,7 +125,7 @@ public class Services {
 			
 			
 		}else if(this.code==1) {
-			genericResponse.setErrorCode("MALFORMED REQUEST");
+			genericResponse.setErrorCode("MALFORMED_REQUEST");
 			genericResponse.setDescription(this.errorDescription);
 			response =  Response.status(400).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 		}
@@ -170,11 +168,13 @@ public class Services {
 	public Response updateAccount(@HeaderParam("authorization") String bearer, @PathParam("user") String user, RegisterRequest request){
 		
 		GenericResponse genericResponse = new GenericResponse();
+		GenericDataResponse dataResponse = new GenericDataResponse();
 		Response response = null;
 		User u = new User();
 		u.setEmail(user);
 		String token = bearer.substring(BEARER.length()).trim();
 		validateRequest(request);
+		User newData = null;
 		
 		if(DBOperations.checkUser(u)) {
 			
@@ -189,7 +189,7 @@ public class Services {
 				u=DBOperations.getUser(user);
 				if(this.code==0) {
 					
-					User newData = new User();
+					newData = new User(); 
 					newData.setApellido(request.apellido);
 					newData.setEmail(request.email);
 					newData.setNombre(request.nombre);
@@ -198,8 +198,13 @@ public class Services {
 					boolean update = DBOperations.update(u, newData);
 					
 					if(update) {
+						dataResponse.setNombre(newData.getNombre());
+						dataResponse.setApellido(newData.getApellido());
+						dataResponse.setEmail(newData.getEmail());
+						
 						genericResponse.setDescription("Account information updated");
 						genericResponse.setErrorCode("OK");
+						genericResponse.setData(dataResponse);
 						response = Response.status(200).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 					}else {
 						genericResponse.setDescription("An error ocurred updating the account");
@@ -208,7 +213,7 @@ public class Services {
 					}
 					
 				}else if(this.code==1) {
-					genericResponse.setErrorCode("MALFORMED REQUEST");
+					genericResponse.setErrorCode("MALFORMED_REQUEST");
 					genericResponse.setDescription(this.errorDescription);
 					response =  Response.status(400).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 				}
@@ -219,6 +224,7 @@ public class Services {
 		}else {
 			
 			genericResponse.setDescription("User does not exist");
+			genericResponse.setErrorCode("INVALID_USER");
 			response = Response.status(401).type(MediaType.APPLICATION_JSON).entity(genericResponse).build();
 		}
 		

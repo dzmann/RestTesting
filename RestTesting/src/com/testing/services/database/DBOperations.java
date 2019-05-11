@@ -163,7 +163,7 @@ public class DBOperations {
 		Statement stmt = null;
 		Token token = new Token();
 		Calendar calendar = Calendar.getInstance();
-		calendar.add(Calendar.MINUTE, 2);
+		calendar.add(Calendar.MINUTE, 30);
 		
 		token.setAccess_token(TokenGenerator.generate());
 		token.setUser_id(u.getEmail());
@@ -248,28 +248,77 @@ public class DBOperations {
 	}
 	
 	
-	public static Token getToken(String email) {
+	public static Token getToken(String token) {
 		Token result = new Token();
 		
 		Connection con = null;
 
 		try {
 			con = DBConnection.getConnection();
-			String query = "SELECT access_token, expiry_date FROM OAUTH_DATA WHERE user_id='"+ email +"'";
+			String query = "SELECT user_id, access_token, expiry_date FROM OAUTH_DATA WHERE access_token='"+ token +"'";
 			
 			Statement preparedStmt = con.createStatement();
 			
 			ResultSet rs = preparedStmt.executeQuery(query);
-			
-			while(rs.next()) {
-				result.setAccess_token(rs.getString("access_token"));
-				result.setExpiry_date(rs.getString("expiry_date"));
-				result.setUser_id(email);
+			if(rs.next()) {
 				
+					
+					result.setAccess_token(rs.getString("access_token"));
+					result.setExpiry_date(rs.getString("expiry_date"));
+					result.setUser_id(rs.getString("user_id"));
+					
+				
+			}else{
+				result.setAccess_token("NOT_FOUND");
 			}
 			
 			con.close();
 			
+		} catch (SQLException e) {
+			result=null;
+			e.printStackTrace();
+		}finally {
+			if(con!=null) {
+				try {
+					con.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		
+		return result;
+	}
+	
+	
+	public static String getUserIdFromToken(String token) {
+		String result="";
+		System.out.println("Obtaining user id from db " + token);
+		Connection con = null;
+
+		try {
+			con = DBConnection.getConnection();
+			String query = "SELECT user_id, access_token, expiry_date FROM OAUTH_DATA WHERE access_token='"+ token +"'";
+			
+			Statement preparedStmt = con.createStatement();
+			
+			ResultSet rs = preparedStmt.executeQuery(query);
+			int i = 0;
+			if(rs.next()) {
+				
+					
+					result = rs.getString("user_id");
+					
+				i++;
+			}
+			
+			if(i==0) {
+				result = "";
+			}
+			
+			con.close();
 			
 		} catch (SQLException e) {
 			result=null;

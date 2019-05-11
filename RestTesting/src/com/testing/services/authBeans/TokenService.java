@@ -41,7 +41,9 @@ public class TokenService {
 	public static Token generateToken() {
 		Token token = new Token();
 		
-		String tokenString = RandomStringUtils.random(25, true, true);
+		String tokenString = RandomStringUtils.random(49, true, true);
+		
+		System.out.println(tokenString + "   generated");
 		
 		token.setDescription("token generated successfully");
 		token.setExpires("");
@@ -57,23 +59,31 @@ public class TokenService {
 	
 	public static boolean isValidToken(String userId, String token) {
 		boolean result = true;
-		com.testing.services.response.Token dbToken = DBOperations.getToken(userId);
-		
-		Calendar dbTokenDate = Calendar.getInstance();
-		Calendar nowDate = Calendar.getInstance();
-		dbTokenDate.setTimeInMillis(Long.parseLong(dbToken.getExpiry_date()));
-		
-		if(token.equals(dbToken.getAccess_token())) {
+		com.testing.services.response.Token dbToken = DBOperations.getToken(token);
+		System.out.println(dbToken.getAccess_token());
+		if(!dbToken.getAccess_token().equals("NOT_FOUND")) {
 			
-			int resultDate = nowDate.compareTo(dbTokenDate);
+			Calendar dbTokenDate = Calendar.getInstance();
+			Calendar nowDate = Calendar.getInstance();
+			dbTokenDate.setTimeInMillis(Long.parseLong(dbToken.getExpiry_date()));
+			
+			if(token.equals(dbToken.getAccess_token())) {
+				
+				int resultDate = nowDate.compareTo(dbTokenDate);
 
-			if(resultDate > 0) {
+				if(resultDate > 0) {
+					result=false;
+				}
+				
+			}else {
 				result=false;
 			}
+			
 			
 		}else {
 			result=false;
 		}
+		
 		
 		return result;
 		
